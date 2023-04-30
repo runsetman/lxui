@@ -41,3 +41,7 @@ func Seq(n int) string {
 	}
 	return string(runes)
 }
+
+func RandomPort(min float64, max float64) int {
+	return int(rand.Float64()*(max-min) + min)
+}

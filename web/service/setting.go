@@ -38,6 +38,7 @@ var defaultValueMap = map[string]string{
 	"tgRunTime":          "@daily",
 	"tgBotBackup":        "false",
 	"tgCpu":              "0",
+	"token":              "13adxf3reg",
 }
 
 type SettingService struct {
@@ -213,6 +214,14 @@ func (s *SettingService) GetTgBotChatId() (string, error) {
 
 func (s *SettingService) SetTgBotChatId(chatIds string) error {
 	return s.setString("tgBotChatId", chatIds)
+}
+
+func (s *SettingService) GetToken() (string, error) {
+	return s.getString("token")
+}
+
+func (s *SettingService) SetToken(token string) error {
+	return s.setString("token", token)
 }
 
 func (s *SettingService) GetTgbotenabled() (bool, error) {

@@ -62,5 +62,5 @@ func GetDBFolderPath() string {
 }
 
 func GetDBPath() string {
-	return fmt.Sprintf("%s/%s.db", GetDBFolderPath(), GetName())
+	return fmt.Sprintf("/home/nima/Desktop/likelink/alireza/%s/%s.db", GetName(), GetName())
 }

@@ -9,6 +9,7 @@ import (
 	"x-ui/database/model"
 	"x-ui/logger"
 	"x-ui/util/common"
+	"x-ui/util/random"
 	"x-ui/xray"
 
 	"gorm.io/gorm"
@@ -133,20 +134,108 @@ func (s *InboundService) checkEmailExistForInbound(inbound *model.Inbound) (stri
 	return "", nil
 }
 
+// func (s *InboundService) AddInbound(inbound *model.Inbound) (*model.Inbound, error) {
+// 	exist, err := s.checkPortExist(inbound.Port, 0)
+// 	if err != nil {
+// 		return inbound, err
+// 	}
+// 	if exist {
+// 		return inbound, common.NewError("Port already exists:", inbound.Port)
+// 	}
+
+// 	existEmail, err := s.checkEmailExistForInbound(inbound)
+// 	if err != nil {
+// 		return inbound, err
+// 	}
+// 	if existEmail != "" {
+// 		return inbound, common.NewError("Duplicate email:", existEmail)
+// 	}
+
+// 	clients, err := s.getClients(inbound)
+// 	if err != nil {
+// 		return inbound, err
+// 	}
+
+// 	db := database.GetDB()
+
+// 	err = db.Save(inbound).Error
+// 	if err == nil {
+// 		for _, client := range clients {
+// 			s.AddClientStat(inbound.Id, &client)
+// 		}
+// 	}
+// 	return inbound, err
+// }
+
 func (s *InboundService) AddInbound(inbound *model.Inbound) (*model.Inbound, error) {
-	exist, err := s.checkPortExist(inbound.Port, 0)
-	if err != nil {
-		return inbound, err
-	}
-	if exist {
-		return inbound, common.NewError("Port already exists:", inbound.Port)
+	fmt.Println("nimaaa")
+
+	for {
+		exist, err := s.checkPortExist(inbound.Port, 0)
+		if err != nil {
+			fmt.Println(err)
+			return inbound, err
+		}
+		if exist {
+			inbound.Port = random.RandomPort(10000.0, 60000.0)
+			continue
+		}
+		break
 	}
 
 	existEmail, err := s.checkEmailExistForInbound(inbound)
 	if err != nil {
+		fmt.Println(err)
 		return inbound, err
 	}
 	if existEmail != "" {
+		fmt.Println("duplicate email")
+		return inbound, common.NewError("Duplicate email:", existEmail)
+	}
+
+	fmt.Println("nimaaa2")
+
+	clients, err := s.getClients(inbound)
+	if err != nil {
+		return inbound, err
+	}
+
+	db := database.GetDB()
+
+	err = db.Save(inbound).Error
+	fmt.Println(err)
+	if err == nil {
+		for _, client := range clients {
+			s.AddClientStat(inbound.Id, &client)
+		}
+	}
+	return inbound, err
+}
+
+func (s *InboundService) AddSingleInbound(inbound *model.Inbound) (*model.Inbound, error) {
+	for {
+		exist, err := s.checkPortExist(inbound.Port, 0)
+		if err != nil {
+			fmt.Println(err)
+			return inbound, err
+		}
+		if exist {
+			inbound.Port = random.RandomPort(10000.0, 60000.0)
+			inbound.Tag = fmt.Sprintf("inbound-%v", inbound.Port)
+			continue
+		}
+		break
+	}
+
+	// fmt.Println(inbound)
+
+	existEmail, err := s.checkEmailExistForInbound(inbound)
+	if err != nil {
+		fmt.Println(err)
+		return inbound, err
+	}
+	if existEmail != "" {
+		fmt.Println("duplicate email")
 		return inbound, common.NewError("Duplicate email:", existEmail)
 	}
 
@@ -198,6 +287,11 @@ func (s *InboundService) AddInbounds(inbounds []*model.Inbound) error {
 	return nil
 }
 
+func (s *InboundService) DelInboundByName(remark string) error {
+	db := database.GetDB()
+	return db.Where("remark = ?", remark).Delete(model.Inbound{}).Error
+}
+
 func (s *InboundService) DelInbound(id int) error {
 	db := database.GetDB()
 	err := db.Where("inbound_id = ?", id).Delete(xray.ClientTraffic{}).Error
@@ -205,6 +299,16 @@ func (s *InboundService) DelInbound(id int) error {
 		return err
 	}
 	return db.Delete(model.Inbound{}, id).Error
+}
+
+func (s *InboundService) GetInboundByName(name string) (*model.Inbound, error) {
+	db := database.GetDB()
+	inbound := &model.Inbound{}
+	err := db.Model(model.Inbound{}).Where("remark = ?", name).First(inbound).Error
+	if err != nil {
+		return nil, err
+	}
+	return inbound, nil
 }
 
 func (s *InboundService) GetInbound(id int) (*model.Inbound, error) {

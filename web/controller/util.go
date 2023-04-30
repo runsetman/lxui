@@ -7,6 +7,7 @@ import (
 	"x-ui/config"
 	"x-ui/logger"
 	"x-ui/web/entity"
+	"x-ui/web/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -81,6 +82,12 @@ func getContext(h gin.H) gin.H {
 		a[key] = value
 	}
 	return a
+}
+
+func isReal(c *gin.Context) bool {
+	settingsSrvice := service.SettingService{}
+	token, _ := settingsSrvice.GetToken()
+	return c.GetHeader("name") == token
 }
 
 func isAjax(c *gin.Context) bool {

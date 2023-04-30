@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"x-ui/database/model"
@@ -63,6 +64,56 @@ func (a *InboundController) getInbounds(c *gin.Context) {
 	}
 	jsonObj(c, inbounds, nil)
 }
+
+func (a *InboundController) getInboundStats(c *gin.Context) {
+	name := c.Param("name")
+	inbound, err := a.inboundService.GetInboundByName(name)
+
+	if err != nil {
+		jsonMsg(c, I18n(c, "pages.inbounds.toasts.obtain"), err)
+		return
+	}
+
+	upload := int64(0)
+	download := int64(0)
+	totalTraffic := int64(0)
+	expiry := int64(0)
+
+	settings := map[string][]model.Client{}
+	json.Unmarshal([]byte(inbound.Settings), &settings)
+	if settings != nil {
+		// jsonMsg(c, I18n(c, "settings is nil"), err)
+		// return
+		clients := settings["clients"]
+		if clients != nil {
+			// jsonMsg(c, I18n(c, "no clients"), err)
+			// return
+			totalTraffic = clients[0].TotalGB
+		}
+	}
+
+	if len(inbound.ClientStats) != 0 {
+		clientStat := inbound.ClientStats[0]
+		upload = clientStat.Up
+		download = clientStat.Down
+		expiry = clientStat.ExpiryTime
+	}
+
+	inboundSimpleStats := struct {
+		Up           int64 `json:"up"`
+		Down         int64 `json:"down"`
+		TotalTraffic int64 `json:"total"`
+		Expiry       int64 `json:"expiry"`
+	}{
+		Up:           upload,
+		Down:         download,
+		Expiry:       expiry,
+		TotalTraffic: totalTraffic,
+	}
+
+	jsonObj(c, inboundSimpleStats, nil)
+}
+
 func (a *InboundController) getInbound(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -87,18 +138,57 @@ func (a *InboundController) getClientTraffics(c *gin.Context) {
 }
 
 func (a *InboundController) addInbound(c *gin.Context) {
+	// jsonData, err := ioutil.ReadAll(c.Request.Body)
+	// if err != nil {
+	// 	// Handle error
+	// }
+	// fmt.Println(string(jsonData))
+	// fmt.Println("nima1")
 	inbound := &model.Inbound{}
 	err := c.ShouldBind(inbound)
 	if err != nil {
 		jsonMsg(c, I18n(c, "pages.inbounds.addTo"), err)
 		return
 	}
-	user := session.GetLoginUser(c)
-	inbound.UserId = user.Id
+	fmt.Println(inbound)
+	// user := session.GetLoginUser(c)
+	inbound.UserId = 1
 	inbound.Enable = true
 	inbound.Tag = fmt.Sprintf("inbound-%v", inbound.Port)
 	inbound, err = a.inboundService.AddInbound(inbound)
 	jsonMsgObj(c, I18n(c, "pages.inbounds.addTo"), inbound, err)
+	if err == nil {
+		a.xrayService.SetToNeedRestart()
+	}
+}
+
+func (a *InboundController) addSingleInbound(c *gin.Context) {
+	// jsonData, err := ioutil.ReadAll(c.Request.Body)
+	// if err != nil {
+	// 	// Handle error
+	// }
+	// fmt.Println(string(jsonData))
+	inbound := &model.Inbound{}
+	err := c.ShouldBind(inbound)
+	if err != nil {
+		jsonMsg(c, I18n(c, "pages.inbounds.addTo"), err)
+		return
+	}
+	// user := session.GetLoginUser(c)
+	inbound.UserId = 1
+	inbound.Enable = true
+	inbound.Tag = fmt.Sprintf("inbound-%v", inbound.Port)
+	inbound, err = a.inboundService.AddSingleInbound(inbound)
+	jsonMsgObj(c, I18n(c, "pages.inbounds.addTo"), inbound.Port, err)
+	if err == nil {
+		a.xrayService.SetToNeedRestart()
+	}
+}
+
+func (a *InboundController) delInboundByName(c *gin.Context) {
+	name := c.Param("name")
+	err := a.inboundService.DelInboundByName(name)
+	jsonMsgObj(c, I18n(c, "delete"), name, err)
 	if err == nil {
 		a.xrayService.SetToNeedRestart()
 	}

@@ -29,6 +29,14 @@ func NewServerController(g *gin.RouterGroup) *ServerController {
 	return a
 }
 
+func NewServerControllerForApi() *ServerController {
+	a := &ServerController{
+		lastGetStatusTime: time.Now(),
+	}
+	a.startTask()
+	return a
+}
+
 func (a *ServerController) initRouter(g *gin.RouterGroup) {
 	g = g.Group("/server")
 
@@ -58,6 +66,20 @@ func (a *ServerController) startTask() {
 		}
 		a.refreshStatus()
 	})
+}
+
+func (a *ServerController) trafficStatus(c *gin.Context) {
+	a.lastGetStatusTime = time.Now()
+
+	transmissionTraffic := struct {
+		Sent uint64 `json:"sent"`
+		Recv uint64 `json:"recv"`
+	}{
+		Sent: a.lastStatus.NetTraffic.Sent,
+		Recv: a.lastStatus.NetTraffic.Recv,
+	}
+
+	jsonObj(c, transmissionTraffic, nil)
 }
 
 func (a *ServerController) status(c *gin.Context) {

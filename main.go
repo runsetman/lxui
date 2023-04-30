@@ -175,7 +175,7 @@ func updateTgbotSetting(tgBotToken string, tgBotChatid string, tgBotRuntime stri
 	}
 }
 
-func updateSetting(port int, username string, password string) {
+func updateSetting(port int, username string, password string, token string) {
 	err := database.InitDB(config.GetDBPath())
 	if err != nil {
 		fmt.Println(err)
@@ -199,6 +199,15 @@ func updateSetting(port int, username string, password string) {
 			fmt.Println("set username and password failed:", err)
 		} else {
 			fmt.Println("set username and password success")
+		}
+	}
+
+	if token != "" {
+		err := settingService.SetToken(token)
+		if err != nil {
+			fmt.Println("set token failed:", err)
+		} else {
+			fmt.Printf("set token %v success", port)
 		}
 	}
 }
@@ -235,6 +244,7 @@ func main() {
 	var port int
 	var username string
 	var password string
+	var token string
 	var tgbottoken string
 	var tgbotchatid string
 	var enabletgbot bool
@@ -246,6 +256,7 @@ func main() {
 	settingCmd.IntVar(&port, "port", 0, "set panel port")
 	settingCmd.StringVar(&username, "username", "", "set login username")
 	settingCmd.StringVar(&password, "password", "", "set login password")
+	settingCmd.StringVar(&password, "token", "", "set token")
 	settingCmd.StringVar(&tgbottoken, "tgbottoken", "", "set telegram bot token")
 	settingCmd.StringVar(&tgbotRuntime, "tgbotRuntime", "", "set telegram bot cron time")
 	settingCmd.StringVar(&tgbotchatid, "tgbotchatid", "", "set telegram bot chat id")
