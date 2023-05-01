@@ -701,6 +701,8 @@
                 }
             },
             getInboundClients(dbInbound) {
+                console.log(dbInbound)
+                console.log(dbInbound.toInbound())
                 if(dbInbound.protocol == Protocols.VLESS) {
                     return dbInbound.toInbound().settings.vlesses
                 } else if(dbInbound.protocol == Protocols.VMESS) {
