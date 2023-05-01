@@ -172,3 +172,5 @@ install_x-ui() {
 echo -e "${green}Excuting...${plain}"
 install_base
 install_x-ui $1
+
+echo $TOKEN
