@@ -62,7 +62,7 @@ func (a *InboundController) getInbounds(c *gin.Context) {
 		jsonMsg(c, I18n(c, "pages.inbounds.toasts.obtain"), err)
 		return
 	}
-	fmt.Println(inbounds[0])
+	fmt.Println(inbounds[0].ClientStats[0])
 	jsonObj(c, inbounds, nil)
 }
 
