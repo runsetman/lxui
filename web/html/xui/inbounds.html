@@ -340,12 +340,15 @@
                 this.defaultKey = msg.obj.defaultKey;
             },
             setInbounds(dbInbounds) {
+                console.log(dbInbounds)
                 this.inbounds.splice(0);
                 this.dbInbounds.splice(0);
                 this.searchedInbounds.splice(0);
                 for (const inbound of dbInbounds) {
                     const dbInbound = new DBInbound(inbound);
                     to_inbound = dbInbound.toInbound()
+                    console.log(dbInbound)
+                    console.log(to_inbound)
                     this.inbounds.push(to_inbound);
                     this.dbInbounds.push(dbInbound);
                     this.searchedInbounds.push(dbInbound);
