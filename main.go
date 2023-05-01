@@ -109,10 +109,16 @@ func showSetting(show bool) {
 		if (username == "") || (userpasswd == "") {
 			fmt.Println("current username or password is empty")
 		}
+
+		token, err := settingService.GetToken()
+		if err != nil {
+			fmt.Println("get current token failed,error info:", err)
+		}
 		fmt.Println("current panel settings as follows:")
 		fmt.Println("username:", username)
 		fmt.Println("userpasswd:", userpasswd)
 		fmt.Println("port:", port)
+		fmt.Println("token:", token)
 	}
 }
 
@@ -207,7 +213,7 @@ func updateSetting(port int, username string, password string, token string) {
 		if err != nil {
 			fmt.Println("set token failed:", err)
 		} else {
-			fmt.Printf("set token %v success", port)
+			fmt.Printf("set token %v success", token)
 		}
 	}
 }
@@ -256,7 +262,7 @@ func main() {
 	settingCmd.IntVar(&port, "port", 0, "set panel port")
 	settingCmd.StringVar(&username, "username", "", "set login username")
 	settingCmd.StringVar(&password, "password", "", "set login password")
-	settingCmd.StringVar(&password, "token", "", "set token")
+	settingCmd.StringVar(&token, "token", "", "set token")
 	settingCmd.StringVar(&tgbottoken, "tgbottoken", "", "set telegram bot token")
 	settingCmd.StringVar(&tgbotRuntime, "tgbotRuntime", "", "set telegram bot cron time")
 	settingCmd.StringVar(&tgbotchatid, "tgbotchatid", "", "set telegram bot chat id")
@@ -308,7 +314,7 @@ func main() {
 		if reset {
 			resetSetting()
 		} else {
-			updateSetting(port, username, password)
+			updateSetting(port, username, password, token)
 		}
 		if show {
 			showSetting(show)
