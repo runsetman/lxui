@@ -62,6 +62,7 @@ func (a *InboundController) getInbounds(c *gin.Context) {
 		jsonMsg(c, I18n(c, "pages.inbounds.toasts.obtain"), err)
 		return
 	}
+	fmt.Println(inbounds)
 	jsonObj(c, inbounds, nil)
 }
 
@@ -152,7 +153,6 @@ func (a *InboundController) addInbound(c *gin.Context) {
 		jsonMsg(c, I18n(c, "pages.inbounds.addTo"), err)
 		return
 	}
-	fmt.Println(inbound)
 	// user := session.GetLoginUser(c)
 	inbound.UserId = 1
 	inbound.Enable = true
