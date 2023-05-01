@@ -62,7 +62,7 @@ func (a *InboundController) getInbounds(c *gin.Context) {
 		jsonMsg(c, I18n(c, "pages.inbounds.toasts.obtain"), err)
 		return
 	}
-	fmt.Println(inbounds)
+	fmt.Println(inbounds[0])
 	jsonObj(c, inbounds, nil)
 }
 
@@ -189,6 +189,7 @@ func (a *InboundController) addSingleInbound(c *gin.Context) {
 
 func (a *InboundController) delInboundByName(c *gin.Context) {
 	name := c.Param("name")
+	fmt.Println("del" + name)
 	err := a.inboundService.DelInboundByName(name)
 	jsonMsgObj(c, I18n(c, "delete"), name, err)
 	if err == nil {
