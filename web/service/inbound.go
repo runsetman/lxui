@@ -304,7 +304,7 @@ func (s *InboundService) DelInbound(id int) error {
 func (s *InboundService) GetInboundByName(name string) (*model.Inbound, error) {
 	db := database.GetDB()
 	inbound := &model.Inbound{}
-	err := db.Model(model.Inbound{}).Where("remark = ?", name).First(inbound).Error
+	err := db.Model(model.Inbound{}).Preload("ClientStats").Where("remark = ?", name).First(inbound).Error
 	if err != nil {
 		return nil, err
 	}
