@@ -92,6 +92,8 @@ func (a *InboundController) getInboundStats(c *gin.Context) {
 		}
 	}
 
+	fmt.Println(inbound)
+
 	if len(inbound.ClientStats) != 0 {
 		clientStat := inbound.ClientStats[0]
 		upload = clientStat.Up
