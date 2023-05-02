@@ -75,10 +75,10 @@ func (a *InboundController) getInboundStats(c *gin.Context) {
 		return
 	}
 
-	upload := int64(0)
-	download := int64(0)
-	totalTraffic := int64(0)
-	expiry := int64(0)
+	upload := inbound.Up
+	download := inbound.Down
+	totalTraffic := inbound.Total
+	expiry := inbound.ExpiryTime
 
 	settings := map[string][]model.Client{}
 	json.Unmarshal([]byte(inbound.Settings), &settings)
@@ -89,18 +89,18 @@ func (a *InboundController) getInboundStats(c *gin.Context) {
 		if clients != nil {
 			// jsonMsg(c, I18n(c, "no clients"), err)
 			// return
-			totalTraffic = clients[0].TotalGB
+			// totalTraffic = clients[0].TotalGB
 		}
 	}
 
-	fmt.Println(inbound)
+	// fmt.Println(inbound)
 
-	if len(inbound.ClientStats) != 0 {
-		clientStat := inbound.ClientStats[0]
-		upload = clientStat.Up
-		download = clientStat.Down
-		expiry = clientStat.ExpiryTime
-	}
+	// if len(inbound.ClientStats) != 0 {
+	// 	clientStat := inbound.ClientStats[0]
+	// 	upload = clientStat.Up
+	// 	download = clientStat.Down
+	// 	expiry = clientStat.ExpiryTime
+	// }
 
 	inboundSimpleStats := struct {
 		Up           int64 `json:"up"`
