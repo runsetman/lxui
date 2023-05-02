@@ -28,10 +28,10 @@ func (a *APIController) initRouter(g *gin.RouterGroup) {
 	g.POST("/add", a.addSingleInbound)
 	// g.POST("/del/:id", a.delInbound)
 	g.POST("/del/:name", a.delInboundByName)
-	// g.POST("/update/:id", a.updateInbound)
+	g.POST("/update/:name", a.updateInboundByName)
 	// g.POST("/addClient", a.addInboundClient)
 	// g.POST("/:id/delClient/:clientId", a.delInboundClient)
-	// g.POST("/updateClient/:clientId", a.updateInboundClient)
+	g.POST("/updateClient/:clientId", a.updateInboundClient)
 	// g.POST("/:id/resetClientTraffic/:email", a.resetClientTraffic)
 	// g.POST("/resetAllTraffics", a.resetAllTraffics)
 	// g.POST("/resetAllClientTraffics/:id", a.resetAllClientTraffics)
@@ -72,8 +72,8 @@ func (a *APIController) delInboundByName(c *gin.Context) {
 func (a *APIController) delInbound(c *gin.Context) {
 	a.inboundController.delInbound(c)
 }
-func (a *APIController) updateInbound(c *gin.Context) {
-	a.inboundController.updateInbound(c)
+func (a *APIController) updateInboundByName(c *gin.Context) {
+	a.inboundController.updateInboundByName(c)
 }
 func (a *APIController) addInboundClient(c *gin.Context) {
 	a.inboundController.addInboundClient(c)

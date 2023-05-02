@@ -24,7 +24,6 @@ func (a *BaseController) checkLogin(c *gin.Context) {
 }
 
 func (a *BaseController) validate(c *gin.Context) {
-
 	if !isReal(c) {
 		pureJsonMsg(c, false, "invalid user")
 		c.Abort()

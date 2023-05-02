@@ -231,6 +231,25 @@ func (a *InboundController) updateInbound(c *gin.Context) {
 	}
 }
 
+func (a *InboundController) updateInboundByName(c *gin.Context) {
+	name := c.Param("name")
+
+	inbound := &model.Inbound{
+		Remark: name,
+	}
+	err := c.ShouldBind(inbound)
+	if err != nil {
+		jsonMsg(c, I18n(c, "pages.inbounds.revise"), err)
+		return
+	}
+
+	inbound, err = a.inboundService.UpdateInboundByName(inbound)
+	jsonMsgObj(c, I18n(c, "pages.inbounds.revise"), inbound, err)
+	if err == nil {
+		a.xrayService.SetToNeedRestart()
+	}
+}
+
 func (a *InboundController) addInboundClient(c *gin.Context) {
 	data := &model.Inbound{}
 	err := c.ShouldBind(data)

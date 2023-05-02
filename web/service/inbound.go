@@ -352,6 +352,18 @@ func (s *InboundService) UpdateInbound(inbound *model.Inbound) (*model.Inbound, 
 	return inbound, db.Save(oldInbound).Error
 }
 
+func (s *InboundService) UpdateInboundByName(inbound *model.Inbound) (*model.Inbound, error) {
+
+	oldInbound, err := s.GetInboundByName(inbound.Remark)
+	if err != nil {
+		return inbound, err
+	}
+	oldInbound.Enable = inbound.Enable
+
+	db := database.GetDB()
+	return inbound, db.Save(oldInbound).Error
+}
+
 func (s *InboundService) AddInboundClient(data *model.Inbound) error {
 	clients, err := s.getClients(data)
 	if err != nil {
