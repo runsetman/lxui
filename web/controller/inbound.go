@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"x-ui/database/model"
 	"x-ui/logger"
@@ -131,8 +132,11 @@ func (a *InboundController) getInbound(c *gin.Context) {
 	jsonObj(c, inbound, nil)
 }
 func (a *InboundController) getClientTraffics(c *gin.Context) {
+	// a.inboundService.GetAllClientTraffics()
 	email := c.Param("email")
 	clientTraffics, err := a.inboundService.GetClientTrafficByEmail(email)
+	fmt.Println("nima")
+	fmt.Println(clientTraffics)
 	if err != nil {
 		jsonMsg(c, "Error getting traffics", err)
 		return
@@ -180,6 +184,7 @@ func (a *InboundController) addSingleInbound(c *gin.Context) {
 	inbound.UserId = 1
 	inbound.Enable = true
 	inbound.Tag = fmt.Sprintf("inbound-%v", inbound.Port)
+	fmt.Println(inbound)
 	inbound, err = a.inboundService.AddSingleInbound(inbound)
 	jsonMsgObj(c, I18n(c, "pages.inbounds.addTo"), inbound.Port, err)
 	if err == nil {
@@ -251,11 +256,51 @@ func (a *InboundController) updateInboundByName(c *gin.Context) {
 }
 
 func (a *InboundController) addInboundClient(c *gin.Context) {
+	// jsonData, err := ioutil.ReadAll(c.Request.Body)
+	// if err != nil {
+	// 	// Handle error
+	// }
+	// str := string(jsonData)
+	// fmt.Println(str)
 	data := &model.Inbound{}
 	err := c.ShouldBind(data)
 	if err != nil {
 		jsonMsg(c, I18n(c, "pages.inbounds.revise"), err)
 		return
+	}
+
+	err = a.inboundService.AddInboundClient(data)
+	if err != nil {
+		jsonMsg(c, "Something went wrong!", err)
+		return
+	}
+	jsonMsg(c, "Client(s) added", nil)
+	if err == nil {
+		a.xrayService.SetToNeedRestart()
+	}
+}
+
+func (a *InboundController) addInboundClientOn443Inbound(c *gin.Context) {
+	data := &model.Inbound{}
+	jsonData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		jsonMsg(c, I18n(c, "pages.inbounds.revise"), err)
+		return
+	}
+	// err = json.Unmarshal(jsonData, data)
+	// if err != nil {
+	// 	// jsonMsg(c, I18n(c, "pages.inbounds.revise"), err)
+	// 	fmt.Println(err.Error())
+	// 	return
+	// }
+
+	data.Settings = string(jsonData)
+	data.UserId = 1
+
+	_, err = a.inboundService.GetInboundByPort(443)
+	if err != nil {
+		// jsonMsg(c, "there is no 443 inbound", err)
+		a.inboundService.Add443Inbound()
 	}
 
 	err = a.inboundService.AddInboundClient(data)
@@ -278,6 +323,21 @@ func (a *InboundController) delInboundClient(c *gin.Context) {
 	clientId := c.Param("clientId")
 
 	err = a.inboundService.DelInboundClient(id, clientId)
+	if err != nil {
+		jsonMsg(c, "Something went wrong!", err)
+		return
+	}
+	jsonMsg(c, "Client deleted", nil)
+	if err == nil {
+		a.xrayService.SetToNeedRestart()
+	}
+}
+
+func (a *InboundController) delInboundClientByName(c *gin.Context) {
+	id := 1
+	clientId := c.Param("clientName")
+
+	err := a.inboundService.DelInboundClientByName(id, clientId)
 	if err != nil {
 		jsonMsg(c, "Something went wrong!", err)
 		return

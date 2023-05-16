@@ -30,7 +30,7 @@ func (s *SubService) GetSubs(subId string, host string) ([]string, string, error
 		return nil, "", err
 	}
 	for _, inbound := range inbounds {
-		clients, err := s.inboundService.getClients(inbound)
+		clients, err := s.inboundService.GetClients(inbound)
 		if err != nil {
 			logger.Error("SubService - GetSub: Unable to get clients from inbound")
 		}
@@ -179,7 +179,7 @@ func (s *SubService) genVmessLink(inbound *model.Inbound, email string) string {
 		}
 	}
 
-	clients, _ := s.inboundService.getClients(inbound)
+	clients, _ := s.inboundService.GetClients(inbound)
 	clientIndex := -1
 	for i, client := range clients {
 		if client.Email == email {
@@ -216,7 +216,7 @@ func (s *SubService) genVlessLink(inbound *model.Inbound, email string) string {
 	}
 	var stream map[string]interface{}
 	json.Unmarshal([]byte(inbound.StreamSettings), &stream)
-	clients, _ := s.inboundService.getClients(inbound)
+	clients, _ := s.inboundService.GetClients(inbound)
 	clientIndex := -1
 	for i, client := range clients {
 		if client.Email == email {
@@ -365,7 +365,7 @@ func (s *SubService) genTrojanLink(inbound *model.Inbound, email string) string 
 	}
 	var stream map[string]interface{}
 	json.Unmarshal([]byte(inbound.StreamSettings), &stream)
-	clients, _ := s.inboundService.getClients(inbound)
+	clients, _ := s.inboundService.GetClients(inbound)
 	clientIndex := -1
 	for i, client := range clients {
 		if client.Email == email {

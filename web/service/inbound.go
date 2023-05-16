@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -21,7 +22,7 @@ type InboundService struct {
 func (s *InboundService) GetInbounds(userId int) ([]*model.Inbound, error) {
 	db := database.GetDB()
 	var inbounds []*model.Inbound
-	err := db.Model(model.Inbound{}).Preload("ClientStats").Where("user_id = ?", userId).Find(&inbounds).Error
+	err := db.Model(model.Inbound{}).Preload("ClientStats").Find(&inbounds).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, err
 	}
@@ -52,7 +53,7 @@ func (s *InboundService) checkPortExist(port int, ignoreId int) (bool, error) {
 	return count > 0, nil
 }
 
-func (s *InboundService) getClients(inbound *model.Inbound) ([]model.Client, error) {
+func (s *InboundService) GetClients(inbound *model.Inbound) ([]model.Client, error) {
 	settings := map[string][]model.Client{}
 	json.Unmarshal([]byte(inbound.Settings), &settings)
 	if settings == nil {
@@ -63,6 +64,7 @@ func (s *InboundService) getClients(inbound *model.Inbound) ([]model.Client, err
 	if clients == nil {
 		return nil, nil
 	}
+	fmt.Println(clients)
 	return clients, nil
 }
 
@@ -111,7 +113,7 @@ func (s *InboundService) checkEmailsExistForClients(clients []model.Client) (str
 }
 
 func (s *InboundService) checkEmailExistForInbound(inbound *model.Inbound) (string, error) {
-	clients, err := s.getClients(inbound)
+	clients, err := s.GetClients(inbound)
 	if err != nil {
 		return "", err
 	}
@@ -195,7 +197,7 @@ func (s *InboundService) AddInbound(inbound *model.Inbound) (*model.Inbound, err
 
 	fmt.Println("nimaaa2")
 
-	clients, err := s.getClients(inbound)
+	clients, err := s.GetClients(inbound)
 	if err != nil {
 		return inbound, err
 	}
@@ -239,7 +241,7 @@ func (s *InboundService) AddSingleInbound(inbound *model.Inbound) (*model.Inboun
 		return inbound, common.NewError("Duplicate email:", existEmail)
 	}
 
-	clients, err := s.getClients(inbound)
+	clients, err := s.GetClients(inbound)
 	if err != nil {
 		return inbound, err
 	}
@@ -252,6 +254,40 @@ func (s *InboundService) AddSingleInbound(inbound *model.Inbound) (*model.Inboun
 			s.AddClientStat(inbound.Id, &client)
 		}
 	}
+	return inbound, err
+}
+
+func (s *InboundService) Add443Inbound() (*model.Inbound, error) {
+
+	inboundJson := `{
+		"up": 0,
+		"down": 0,
+		"total": 0,
+		"remark": "443",
+		"enable": true,
+		"expiryTime": 0,
+		"listen": "",
+		"port": 443,
+		"protocol": "vmess",
+		"settings": "{\n  \"clients\": [\n    {\n      \"id\": \"92b50226-cf2f-42ec-b0ef-1905618e3bd3\",\n      \"alterId\": 0,\n      \"email\": \"ddd\",\n      \"totalGB\": 32212254720,\n      \"expiryTime\": 1686833885719,\n      \"enable\": true,\n      \"tgId\": \"\",\n      \"subId\": \"\"\n    }\n  ],\n  \"disableInsecureEncryption\": false\n}",
+		"streamSettings": "{\n  \"network\": \"tcp\",\n  \"security\": \"none\",\n  \"tcpSettings\": {\n    \"acceptProxyProtocol\": false,\n    \"header\": {\n      \"type\": \"http\",\n      \"request\": {\n        \"method\": \"GET\",\n        \"path\": [\n          \"/\"\n        ],\n        \"headers\": {\n          \"Host\": [\n            \"soft98.ir\"\n          ]\n        }\n      },\n      \"response\": {\n        \"version\": \"1.1\",\n        \"status\": \"200\",\n        \"reason\": \"OK\",\n        \"headers\": {}\n      }\n    }\n  }\n}",
+		"sniffing": "{\n  \"enabled\": true,\n  \"destOverride\": [\n    \"http\",\n    \"tls\"\n  ]\n}"
+  }`
+
+	inbound := &model.Inbound{}
+	err := json.Unmarshal([]byte(inboundJson), inbound)
+	if err != nil {
+		return nil, errors.New("cannot insert 443 inbound to db")
+	}
+	inbound.UserId = 1
+	inbound.Enable = true
+	inbound.Tag = "inbound-443"
+	_, err = s.AddSingleInbound(inbound)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil, err
+	}
+
 	return inbound, err
 }
 
@@ -305,6 +341,16 @@ func (s *InboundService) GetInboundByName(name string) (*model.Inbound, error) {
 	db := database.GetDB()
 	inbound := &model.Inbound{}
 	err := db.Model(model.Inbound{}).Preload("ClientStats").Where("remark = ?", name).First(inbound).Error
+	if err != nil {
+		return nil, err
+	}
+	return inbound, nil
+}
+
+func (s *InboundService) GetInboundByPort(port int) (*model.Inbound, error) {
+	db := database.GetDB()
+	inbound := &model.Inbound{}
+	err := db.Model(model.Inbound{}).Preload("ClientStats").Where("port = ?", port).First(inbound).Error
 	if err != nil {
 		return nil, err
 	}
@@ -365,7 +411,7 @@ func (s *InboundService) UpdateInboundByName(inbound *model.Inbound) (*model.Inb
 }
 
 func (s *InboundService) AddInboundClient(data *model.Inbound) error {
-	clients, err := s.getClients(data)
+	clients, err := s.GetClients(data)
 	if err != nil {
 		return err
 	}
@@ -385,7 +431,7 @@ func (s *InboundService) AddInboundClient(data *model.Inbound) error {
 		return common.NewError("Duplicate email:", existEmail)
 	}
 
-	oldInbound, err := s.GetInbound(data.Id)
+	oldInbound, err := s.GetInboundByPort(443)
 	if err != nil {
 		return err
 	}
@@ -464,8 +510,55 @@ func (s *InboundService) DelInboundClient(inboundId int, clientId string) error 
 	return db.Save(oldInbound).Error
 }
 
+func (s *InboundService) DelInboundClientByName(inboundId int, clientName string) error {
+	oldInbound, err := s.GetInbound(inboundId)
+	if err != nil {
+		logger.Error("Load Old Data Error")
+		return err
+	}
+	var settings map[string]interface{}
+	err = json.Unmarshal([]byte(oldInbound.Settings), &settings)
+	if err != nil {
+		return err
+	}
+
+	email := ""
+	client_key := "email"
+	if oldInbound.Protocol == "trojan" {
+		client_key = "password"
+	}
+
+	inerfaceClients := settings["clients"].([]interface{})
+	var newClients []interface{}
+	for _, client := range inerfaceClients {
+		c := client.(map[string]interface{})
+		c_id := c[client_key].(string)
+		if c_id == clientName {
+			email = c["email"].(string)
+		} else {
+			newClients = append(newClients, client)
+		}
+	}
+
+	settings["clients"] = newClients
+	newSettings, err := json.MarshalIndent(settings, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	oldInbound.Settings = string(newSettings)
+
+	db := database.GetDB()
+	err = s.DelClientStat(db, email)
+	if err != nil {
+		logger.Error("Delete stats Data Error")
+		return err
+	}
+	return db.Save(oldInbound).Error
+}
+
 func (s *InboundService) UpdateInboundClient(data *model.Inbound, clientId string) error {
-	clients, err := s.getClients(data)
+	clients, err := s.GetClients(data)
 	if err != nil {
 		return err
 	}
@@ -483,7 +576,7 @@ func (s *InboundService) UpdateInboundClient(data *model.Inbound, clientId strin
 		return err
 	}
 
-	oldClients, err := s.getClients(oldInbound)
+	oldClients, err := s.GetClients(oldInbound)
 	if err != nil {
 		return err
 	}
@@ -728,7 +821,7 @@ func (s *InboundService) UpdateClientStat(email string, client *model.Client) er
 	result := db.Model(xray.ClientTraffic{}).
 		Where("email = ?", email).
 		Updates(map[string]interface{}{
-			"enable":      true,
+			"enable":      client.Enable,
 			"email":       client.Email,
 			"total":       client.TotalGB,
 			"expiry_time": client.ExpiryTime})
@@ -881,7 +974,7 @@ func (s *InboundService) GetClientTrafficTgBot(tguname string) ([]*xray.ClientTr
 	}
 	var emails []string
 	for _, inbound := range inbounds {
-		clients, err := s.getClients(inbound)
+		clients, err := s.GetClients(inbound)
 		if err != nil {
 			logger.Error("Unable to get clients from inbound")
 		}
@@ -914,6 +1007,17 @@ func (s *InboundService) GetClientTrafficByEmail(email string) (traffic *xray.Cl
 		}
 	}
 	return traffics[0], err
+}
+
+func (s *InboundService) GetAllClientTraffics() {
+	db := database.GetDB()
+	var traffics []*xray.ClientTraffic
+
+	err := db.Model(xray.ClientTraffic{}).Find(&traffics).Error
+	if err != nil {
+	}
+
+	fmt.Println(traffics)
 }
 
 func (s *InboundService) SearchClientTraffic(query string) (traffic *xray.ClientTraffic, err error) {
@@ -1002,7 +1106,7 @@ func (s *InboundService) MigrationRequirements() {
 
 			inbounds[inbound_index].Settings = string(modifiedSettings)
 		}
-		modelClients, err := s.getClients(inbounds[inbound_index])
+		modelClients, err := s.GetClients(inbounds[inbound_index])
 		if err != nil {
 			return
 		}

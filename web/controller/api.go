@@ -24,13 +24,15 @@ func (a *APIController) initRouter(g *gin.RouterGroup) {
 	g.GET("/", a.inbounds)
 	// g.GET("/get/:id", a.inbound)
 	g.POST("/get/:name", a.getInbound)
-	// g.GET("/getClientTraffics/:email", a.getClientTraffics)
+	g.POST("/getClientTraffics/:email", a.getClientTraffics)
 	g.POST("/add", a.addSingleInbound)
 	// g.POST("/del/:id", a.delInbound)
 	g.POST("/del/:name", a.delInboundByName)
 	g.POST("/update/:name", a.updateInboundByName)
 	// g.POST("/addClient", a.addInboundClient)
-	// g.POST("/:id/delClient/:clientId", a.delInboundClient)
+	g.POST("/addTlsClient", a.addInboundClientOn443Inbound)
+	g.POST("/:id/delClient/:clientId", a.delInboundClient)
+	g.POST("/delClient/:clientName", a.delInboundClientByName)
 	g.POST("/updateClient/:clientId", a.updateInboundClient)
 	// g.POST("/:id/resetClientTraffic/:email", a.resetClientTraffic)
 	// g.POST("/resetAllTraffics", a.resetAllTraffics)
@@ -78,8 +80,14 @@ func (a *APIController) updateInboundByName(c *gin.Context) {
 func (a *APIController) addInboundClient(c *gin.Context) {
 	a.inboundController.addInboundClient(c)
 }
+func (a *APIController) addInboundClientOn443Inbound(c *gin.Context) {
+	a.inboundController.addInboundClientOn443Inbound(c)
+}
 func (a *APIController) delInboundClient(c *gin.Context) {
 	a.inboundController.delInboundClient(c)
+}
+func (a *APIController) delInboundClientByName(c *gin.Context) {
+	a.inboundController.delInboundClientByName(c)
 }
 func (a *APIController) updateInboundClient(c *gin.Context) {
 	a.inboundController.updateInboundClient(c)
